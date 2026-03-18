@@ -1,0 +1,5 @@
+{
+    "chromaDB": "./chroma_db",
+    "raw_document_store": "./raw_document_store",
+    "bm25_index": "bm25_index.pkl"
+}

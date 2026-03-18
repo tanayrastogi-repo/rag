@@ -5,5 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "docling>=2.80.0",
+    "langchain>=1.2.12",
+    "langchain-chroma>=1.1.0",
+    "langchain-classic>=1.0.3",
+    "langchain-community>=0.4.1",
+    "langchain-docling>=2.0.0",
+    "langchain-ollama>=1.0.1",
     "marimo[recommended]>=0.21.0",
+    "rank-bm25>=0.2.2",
+    "sentence-transformers>=5.3.0",
 ]

@@ -214,3 +214,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Local Storage files
+src/chroma_db/
+src/raw_document_store/
+src/bm25_index.pkl
