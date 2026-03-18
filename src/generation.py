@@ -4,6 +4,7 @@ import pickle
 import os
 from typing import List
 from typing_extensions import TypedDict
+from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_classic.storage import LocalFileStore
 from langchain_classic.retrievers.multi_vector import MultiVectorRetriever
@@ -14,6 +15,9 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langgraph.graph import StateGraph, START, END
+
+# Load environment variables from .env.test
+load_dotenv(".env.test")
 
 # --- 1. DEFINE THE LANGGRAPH STATE ---
 class GraphState(TypedDict):
@@ -37,11 +41,12 @@ def run_generation(question: str, gen_config: dict, storage_config: dict):
     reranker_threshold = gen_config.get("reranker_threshold", 0.0)
     llm_model = gen_config.get("llm_model", "llama3.2")
     llm_temperature = gen_config.get("llm_temperature", 0.2)
+    embeddeing_model = gen_config.get("embedding_model", "nomic-embed-text")
 
     print("--- ⚙️ LOADING DATABASES ---")
     
     # 1a. Load Semantic Search (Chroma)
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    embeddings = OllamaEmbeddings(model=embeddeing_model)
     vectorstore = Chroma(
         collection_name="research_summaries",
         embedding_function=embeddings,
@@ -174,6 +179,8 @@ def run_generation(question: str, gen_config: dict, storage_config: dict):
     final_state = output[list(output.keys())[0]]
     print(final_state.get("generation", "I could not find relevant information in the document to answer your question. The strict grader blocked it!"))
 
+    # Return for testing purposes
+    return final_state
 
 if __name__ == "__main__":
     # Setup argument parsing

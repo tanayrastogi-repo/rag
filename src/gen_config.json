@@ -5,5 +5,6 @@
     "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
     "reranker_threshold": 0.0,
     "llm_model": "llama3.2:3b",
-    "llm_temperature": 0.2
+    "llm_temperature": 0.2, 
+    "embeddeing_model": "nomic-embed-text"
 }

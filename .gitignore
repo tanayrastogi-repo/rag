@@ -220,3 +220,6 @@ __marimo__/
 src/chroma_db/
 src/raw_document_store/
 src/bm25_index.pkl
+
+# Remove the environment variable file
+.env.test
