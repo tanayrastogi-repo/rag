@@ -17,6 +17,31 @@ A production-ready, 100% locally hosted Retrieval-Augmented Generation (RAG) pip
 
 ---
 
+### Reasoning behind certain decisions: 
+
+* **Multi-vector**: We use a Multi-Vector Retriever because research paper contains test, tables and images/figures. Standard RAG will just embedded them directly. Here we use a LLM to write concise, searchable summary of every table and figure and put in the vector dataset. We also link them via a common ID to a separate DocumentStore that holds the raw, original table or image. When the user asks a question, the system searches the summaries, finds a match, but retrieves the raw data to pass to the final generation LLM.
+
+* **Docling for Parsing**: While parsing manuscripts, it is important to preserve the document structure. Docling, compared to LlamaParse/Unstructured, is native integration with Langchain. It can returns markdown from the original formatted headings. However, docling is very heavy and computationally slow. Don't use it if you need real-time document processing for user uploads.
+
+* **Using HybridChunker**: We use the Docling's HybridChunker because it also save the "page number" as metadata during the chunking. Compared to "MarkdownHeaderTextSplitter" which only returns a markdown and looses all the text page structure information. 
+
+* **Issue with HybridChunker**: Because the HybridChunker tracks everything, it injects a massive, highly nested JSON dictionary into the chunk's metadata (containing bounding boxes, font sizes, etc.). ChromaDB will instantly crash if you feed it nested dictionaries or lists in the metadata. We must write a script to "flatten" this metadata, extracting only the page numbers and headers into clean strings.
+
+* **Chunk size using MarkdownHeaderTextSplitter**: As the MarkdownHeaderTextSplitter only chunks the text based headers, there is no standard limit on the size of the chunk. It aims to keep the text under the header as it is. If we want to have chunk of constant size, then we have to have a hybrid solution using MarkdownHeaderTextSplitter and RecursiveCharacterTextSplitter. We use the MarkdownHeaderTextSplitter to get the structure and metadata, and then we pass those results through a RecursiveCharacterTextSplitter to enforce a strict size limit.
+
+* **Importance of chunk size**: A 15-page chunk will crash your embedding model (which usually has a strict token limit, like 8192 tokens for nomic-embed-text).
+
+* **EnsembleRetriever**: During the generation time, we use the Langchain's EnsembleRetriever to retrive information from both the MultiVectorRetriever and BM25Retriever. The results are then extracted from both the retriever and then are merged using Reciprocal Rank Fusion (RRF) method. 
+
+* **Re-Ranking**: This is the curcial part of the self-reflective RAG. The pipeline grades the extracted documents to make sure that the information in them are relevant. Either we can use a "LLM-as-judge" or use a re-ranker model. Re-ranker are faster than LLM-as-judge and are also not prone to hallucinating. Using Re-rankers use get - 1. Speed --> Generating tokens with an LLM takes seconds. A local re-ranker scoring 4 documents takes milliseconds. 2. Cost --> If you were using a cloud API, you just removed an entire LLM call from your workflow. 3. Accuracy --> The RRF algorithm we used in the retrieval step is great for rough sorting, but the re-ranker acts as the ultimate, highly-intelligent filter. It prevents the generation LLM from ever seeing garbage data.
+
+* **HNSW**: The HNSW (Hierarchical Navigable Small World) algorithm is operating entirely inside of ChromaDB. It is the invisible, lightning-fast math engine that makes your semantic search possible. Let's break down exactly what it is doing and where it fires off in the pipeline we just built. HNSW is an Approximate Nearest Neighbor (ANN) algorithm. Instead of checking everything, it builds a multi-layered graph. HNSW: It trades a tiny bit of accuracy for a massive amount of speed.
+  
+
+* 
+
+---
+
 ## 🗺️ System Architecture
 
 The pipeline is split into two distinct phases: asynchronous **Ingestion** and real-time **Retrieval & Generation**.
